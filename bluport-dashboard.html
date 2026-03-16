@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bluport Creative - Personel Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0f1117;
+    --bg2: #1a1d27;
+    --bg3: #242833;
+    --border: #2e3345;
+    --text: #e4e7f1;
+    --text2: #8b90a5;
+    --accent: #6366f1;
+    --accent2: #818cf8;
+    --green: #34d399;
+    --yellow: #fbbf24;
+    --red: #f87171;
+    --blue: #60a5fa;
+    --purple: #a78bfa;
+    --pink: #f472b6;
+    --orange: #fb923c;
+    --cyan: #22d3ee;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    position: fixed; left: 0; top: 0; bottom: 0;
+    width: 260px; background: var(--bg2);
+    border-right: 1px solid var(--border);
+    padding: 24px 16px;
+    overflow-y: auto;
+    z-index: 100;
+  }
+
+  .logo { display: flex; align-items: center; gap: 12px; margin-bottom: 32px; padding: 0 8px; }
+  .logo-icon {
+    width: 40px; height: 40px; background: linear-gradient(135deg, var(--accent), var(--purple));
+    border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 18px; color: white;
+  }
+  .logo-text { font-weight: 700; font-size: 16px; }
+  .logo-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+  .nav-section { margin-bottom: 24px; }
+  .nav-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text2); padding: 0 12px; margin-bottom: 8px; }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 8px; cursor: pointer;
+    transition: all 0.2s; font-size: 13px; font-weight: 500;
+    color: var(--text2); position: relative;
+  }
+  .nav-item:hover { background: var(--bg3); color: var(--text); }
+  .nav-item.active { background: rgba(99,102,241,0.15); color: var(--accent2); }
+  .nav-item .badge {
+    margin-left: auto; background: var(--bg3); padding: 2px 8px;
+    border-radius: 10px; font-size: 11px; font-weight: 600;
+  }
+  .nav-item.active .badge { background: rgba(99,102,241,0.2); color: var(--accent2); }
+  .nav-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  /* Main */
+  .main { margin-left: 260px; padding: 24px 32px; }
+
+  .header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 28px;
+  }
+  .header h1 { font-size: 24px; font-weight: 700; }
+  .header-sub { color: var(--text2); font-size: 13px; margin-top: 4px; }
+
+  .month-filter {
+    display: flex; gap: 6px; background: var(--bg2); padding: 4px;
+    border-radius: 10px; border: 1px solid var(--border);
+  }
+  .month-btn {
+    padding: 7px 14px; border-radius: 7px; border: none;
+    background: transparent; color: var(--text2); cursor: pointer;
+    font-size: 12px; font-weight: 500; font-family: inherit;
+    transition: all 0.2s;
+  }
+  .month-btn:hover { color: var(--text); }
+  .month-btn.active { background: var(--accent); color: white; }
+
+  /* Overview Cards */
+  .overview-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 16px; margin-bottom: 28px;
+  }
+  .stat-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 14px; padding: 20px;
+  }
+  .stat-card .label { font-size: 12px; color: var(--text2); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .stat-card .value { font-size: 28px; font-weight: 700; }
+  .stat-card .change { font-size: 12px; margin-top: 6px; }
+  .stat-card .change.up { color: var(--green); }
+  .stat-card .change.down { color: var(--red); }
+
+  /* Charts */
+  .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 28px; }
+  .chart-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 14px; padding: 20px;
+  }
+  .chart-card h3 { font-size: 14px; font-weight: 600; margin-bottom: 16px; }
+  .chart-container { position: relative; height: 280px; }
+
+  /* Daily Table */
+  .table-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 14px; padding: 20px; margin-bottom: 28px;
+  }
+  .table-card h3 { font-size: 14px; font-weight: 600; margin-bottom: 16px; }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    text-align: left; font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--text2); padding: 10px 12px;
+    border-bottom: 1px solid var(--border); font-weight: 600;
+  }
+  tbody td {
+    padding: 10px 12px; border-bottom: 1px solid rgba(46,51,69,0.5);
+    font-size: 13px;
+  }
+  tbody tr:hover { background: rgba(99,102,241,0.05); }
+  tbody tr { cursor: pointer; }
+
+  .hours-bar {
+    height: 6px; border-radius: 3px; background: var(--bg3);
+    position: relative; min-width: 80px;
+  }
+  .hours-bar-fill {
+    height: 100%; border-radius: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--purple));
+  }
+
+  .firm-tag {
+    display: inline-block; padding: 3px 8px; border-radius: 5px;
+    font-size: 11px; font-weight: 500; background: rgba(99,102,241,0.12);
+    color: var(--accent2); margin: 1px 2px;
+  }
+
+  /* Date Filter */
+  .date-filter {
+    display: flex; gap: 4px; background: var(--bg2); padding: 3px;
+    border-radius: 10px; border: 1px solid var(--border); flex-shrink: 0;
+  }
+  .date-btn {
+    padding: 6px 12px; border-radius: 7px; border: none;
+    background: transparent; color: var(--text2); cursor: pointer;
+    font-size: 11px; font-weight: 500; font-family: inherit;
+    transition: all 0.2s; white-space: nowrap;
+  }
+  .date-btn:hover { color: var(--text); background: var(--bg3); }
+  .date-btn.active { background: var(--accent); color: white; }
+
+  /* Detail Expandable */
+  .day-detail {
+    display: none; background: var(--bg); border-radius: 8px;
+    padding: 12px; margin: 4px 12px 8px;
+  }
+  .day-detail.show { display: block; }
+  .detail-item {
+    display: grid; grid-template-columns: 90px 120px 1fr 60px;
+    gap: 8px; padding: 8px 10px; font-size: 12px;
+    border-bottom: 1px solid rgba(46,51,69,0.3);
+    align-items: start; border-radius: 6px; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .detail-item:hover { background: rgba(99,102,241,0.08); }
+  .detail-item:last-child { border-bottom: none; }
+  .detail-time { color: var(--cyan); font-weight: 500; font-family: monospace; }
+  .detail-firm { color: var(--yellow); font-weight: 500; }
+  .detail-desc { color: var(--text); font-weight: 400; }
+  .detail-hours { color: var(--green); font-weight: 600; text-align: right; }
+  .detail-task-info {
+    display: none; grid-column: 1 / -1; padding: 8px 10px;
+    background: rgba(99,102,241,0.06); border-radius: 6px;
+    margin-top: 4px; font-size: 12px; color: var(--text2);
+    border-left: 3px solid var(--accent);
+  }
+  .detail-task-info.show { display: block; }
+
+  /* Firm Rankings */
+  .firm-rank {
+    display: flex; align-items: center; gap: 12px;
+    padding: 8px 0; border-bottom: 1px solid rgba(46,51,69,0.4);
+  }
+  .firm-rank:last-child { border-bottom: none; }
+  .firm-rank .rank { font-size: 11px; color: var(--text2); width: 20px; font-weight: 600; }
+  .firm-rank .name { font-size: 13px; font-weight: 500; flex: 1; }
+  .firm-rank .hours { font-size: 13px; font-weight: 600; color: var(--accent2); }
+  .firm-rank .tasks-count { font-size: 11px; color: var(--text2); margin-left: 8px; }
+  .firm-bar { height: 4px; background: var(--bg3); border-radius: 2px; margin-top: 4px; flex: 1; }
+  .firm-bar-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--accent), var(--cyan)); }
+
+  /* Genel Bakış */
+  .team-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 28px; }
+  .team-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px; cursor: pointer;
+    transition: all 0.2s; position: relative; overflow: hidden;
+  }
+  .team-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .team-card .name { font-size: 13px; font-weight: 600; margin-bottom: 10px; }
+  .team-card .metric { font-size: 22px; font-weight: 700; color: var(--accent2); }
+  .team-card .metric-label { font-size: 10px; color: var(--text2); margin-top: 2px; }
+  .team-card .mini-stats { display: flex; gap: 12px; margin-top: 10px; }
+  .team-card .mini-stat { font-size: 11px; color: var(--text2); }
+  .team-card .mini-stat span { color: var(--text); font-weight: 600; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 3px; }
+
+  /* Responsive */
+  @media (max-width: 1200px) { .overview-grid { grid-template-columns: repeat(2, 1fr); } .team-grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 900px) { .sidebar { display: none; } .main { margin-left: 0; } .charts-grid { grid-template-columns: 1fr; } }
+
+  .hidden { display: none; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .loading-shimmer {
+    animation: shimmer 1.5s infinite;
+    background: linear-gradient(90deg, var(--bg3) 25%, var(--bg2) 50%, var(--bg3) 75%);
+    background-size: 200% 100%;
+  }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">B</div>
+    <div>
+      <div class="logo-text">Bluport Creative</div>
+      <div class="logo-sub">Personel Dashboard</div>
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Genel</div>
+    <div class="nav-item active" onclick="showPage('overview')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Genel Bakış
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Personel</div>
+    <div id="nav-persons"></div>
+  </div>
+</div>
+
+<div class="main">
+  <!-- Overview Page -->
+  <div class="page active" id="page-overview">
+    <div class="header">
+      <div>
+        <h1>Ekip Genel Bakış</h1>
+        <div class="header-sub">Tüm personel performans özeti</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <div class="date-filter" id="globalDateFilter">
+          <button class="date-btn" onclick="setDateFilter('today')">Bugün</button>
+          <button class="date-btn" onclick="setDateFilter('yesterday')">Dün</button>
+          <button class="date-btn" onclick="setDateFilter(7)">7 Gün</button>
+          <button class="date-btn" onclick="setDateFilter(15)">15 Gün</button>
+          <button class="date-btn active" onclick="setDateFilter(30)">30 Gün</button>
+          <button class="date-btn" onclick="setDateFilter('all')">Tümü</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="overview-grid" id="overviewStats"></div>
+    <div class="team-grid" id="teamGrid"></div>
+    <div class="charts-grid">
+      <div class="chart-card">
+        <h3>Aylık Çalışma Saatleri - Ekip Karşılaştırması</h3>
+        <div class="chart-container"><canvas id="teamMonthlyChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Toplam Saat Dağılımı</h3>
+        <div class="chart-container"><canvas id="teamPieChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Person Pages -->
+  <div id="personPages"></div>
+</div>
+
+<script>
+// ==================== DATA ====================
+const SUMMARY_DATA = {
+  "RECEP":{"total":{"t":486,"h":491.76,"days":74},"monthly":{"12/2025":{"t":107,"h":93.56,"d":14},"1/2026":{"t":166,"h":183.35,"d":26},"2/2026":{"t":159,"h":157.77,"d":24},"3/2026":{"t":54,"h":57.08,"d":10}},"firms":[{"n":"Bluport","t":117,"h":94.51},{"n":"Dizzy Foods","t":62,"h":68.4},{"n":"Ye\u015fileko","t":47,"h":50.31},{"n":"Arven","t":27,"h":29.73},{"n":"Kepsa\u015f","t":31,"h":29.56},{"n":"TGA","t":18,"h":28.23},{"n":"Hac\u0131 Sokakta","t":22,"h":20.34},{"n":"Galle Restaurant","t":8,"h":14},{"n":"Do\u011fu \u015eekerleme","t":8,"h":12.75},{"n":"Askon","t":29,"h":8.35}],"daily":[{"d":"14.03.2026","t":5,"h":3.67},{"d":"13.03.2026","t":4,"h":5.83},{"d":"12.03.2026","t":6,"h":6.5},{"d":"11.03.2026","t":5,"h":6.08},{"d":"09.03.2026","t":5,"h":6.59},{"d":"07.03.2026","t":7,"h":3.33},{"d":"06.03.2026","t":5,"h":6.41},{"d":"05.03.2026","t":6,"h":6.32},{"d":"04.03.2026","t":8,"h":5.93},{"d":"03.03.2026","t":3,"h":6.42},{"d":"28.02.2026","t":5,"h":6.84},{"d":"27.02.2026","t":6,"h":6.66},{"d":"26.02.2026","t":6,"h":6.49},{"d":"25.02.2026","t":6,"h":5.83},{"d":"24.02.2026","t":4,"h":5.83},{"d":"23.02.2026","t":6,"h":5.49},{"d":"21.02.2026","t":3,"h":4.25},{"d":"20.02.2026","t":2,"h":7.5},{"d":"19.02.2026","t":2,"h":7.16},{"d":"18.02.2026","t":9,"h":10.09}]},
+  "MOHAMMAD":{"total":{"t":358,"h":606.76,"days":81},"monthly":{"12/2025":{"t":103,"h":138.84,"d":16},"1/2026":{"t":138,"h":219.57,"d":28},"2/2026":{"t":84,"h":169.53,"d":26},"3/2026":{"t":33,"h":78.82,"d":11}},"firms":[{"n":"Bluport","t":58,"h":70.55},{"n":"Piyano","t":31,"h":53.26},{"n":"TGA","t":15,"h":48.66},{"n":"Nespon makina","t":21,"h":38.89},{"n":"Forum AVM","t":12,"h":28.66},{"n":"Toyota","t":16,"h":28.58},{"n":"Kepsa\u015f","t":28,"h":49.59},{"n":"\u0130BF","t":15,"h":24.39},{"n":"Ag\u00fc","t":8,"h":21.42},{"n":"Dizzy Foods","t":10,"h":18.5}],"daily":[{"d":"13.03.2026","t":4,"h":6.5},{"d":"12.03.2026","t":2,"h":6.83},{"d":"11.03.2026","t":6,"h":6.5},{"d":"10.03.2026","t":2,"h":7},{"d":"09.03.2026","t":2,"h":6.83},{"d":"07.03.2026","t":3,"h":4},{"d":"06.03.2026","t":1,"h":7},{"d":"05.03.2026","t":2,"h":7.33},{"d":"04.03.2026","t":3,"h":9.83},{"d":"03.03.2026","t":4,"h":7},{"d":"02.03.2026","t":4,"h":10},{"d":"26.02.2026","t":4,"h":5.5},{"d":"25.02.2026","t":6,"h":5.83},{"d":"24.02.2026","t":5,"h":6.66},{"d":"23.02.2026","t":3,"h":6.83},{"d":"21.02.2026","t":3,"h":6.33},{"d":"20.02.2026","t":6,"h":10.32},{"d":"19.02.2026","t":3,"h":5.5},{"d":"18.02.2026","t":5,"h":7.17},{"d":"17.02.2026","t":3,"h":5.83}]},
+  "TALHA":{"total":{"t":434,"h":527.6,"days":76},"monthly":{"12/2025":{"t":126,"h":112.09,"d":15},"1/2026":{"t":142,"h":177.81,"d":26},"2/2026":{"t":121,"h":157.98,"d":23},"3/2026":{"t":45,"h":79.72,"d":12}},"firms":[{"n":"TGA","t":42,"h":67.08},{"n":"Cihangir Okullar\u0131","t":46,"h":44.79},{"n":"Bluport","t":53,"h":38.09},{"n":"Tork Yap\u0131","t":20,"h":37.47},{"n":"Hisar","t":33,"h":33.09},{"n":"G\u00fcrsu","t":15,"h":25.58},{"n":"Dizzy Foods","t":9,"h":24.92},{"n":"Egerise","t":23,"h":23.43},{"n":"Beyazsaray","t":16,"h":21.02},{"n":"\u0130BF","t":16,"h":15.42}],"daily":[{"d":"14.03.2026","t":5,"h":5.25},{"d":"13.03.2026","t":7,"h":7.16},{"d":"12.03.2026","t":5,"h":7},{"d":"11.03.2026","t":5,"h":7.3},{"d":"10.03.2026","t":2,"h":7},{"d":"09.03.2026","t":3,"h":7.83},{"d":"07.03.2026","t":3,"h":8.5},{"d":"06.03.2026","t":4,"h":6.67},{"d":"05.03.2026","t":3,"h":7.33},{"d":"04.03.2026","t":3,"h":6},{"d":"03.03.2026","t":3,"h":4.5},{"d":"02.03.2026","t":3,"h":4.84},{"d":"28.02.2026","t":2,"h":4.83},{"d":"27.02.2026","t":3,"h":6},{"d":"26.02.2026","t":6,"h":7.17},{"d":"25.02.2026","t":3,"h":7.33},{"d":"24.02.2026","t":7,"h":9.08},{"d":"23.02.2026","t":5,"h":7.92},{"d":"21.02.2026","t":4,"h":4.58},{"d":"20.02.2026","t":3,"h":6.5}]},
+  "ELANUR":{"total":{"t":183,"h":485.41,"days":73},"monthly":{"12/2025":{"t":45,"h":97.66,"d":13},"1/2026":{"t":78,"h":171.49,"d":27},"2/2026":{"t":45,"h":166.59,"d":24},"3/2026":{"t":15,"h":49.67,"d":9}},"firms":[{"n":"Do\u011fu \u015eekerleme","t":49,"h":150.49},{"n":"Porland","t":14,"h":71.5},{"n":"Bluport","t":41,"h":49.82},{"n":"Dizzy Foods","t":18,"h":42.26},{"n":"Nespon","t":12,"h":40.16},{"n":"Steg","t":13,"h":30.58},{"n":"Yakut Mangal","t":11,"h":29.59},{"n":"Forum Avm","t":6,"h":23.92},{"n":"Mersin Forum Avm","t":3,"h":19},{"n":"Kayseri Forum Avm","t":1,"h":9.42}],"daily":[{"d":"13.03.2026","t":1,"h":5},{"d":"12.03.2026","t":1,"h":6.33},{"d":"11.03.2026","t":2,"h":1},{"d":"09.03.2026","t":2,"h":3},{"d":"06.03.2026","t":1,"h":6.75},{"d":"05.03.2026","t":3,"h":6},{"d":"04.03.2026","t":1,"h":6.25},{"d":"03.03.2026","t":3,"h":5.92},{"d":"02.03.2026","t":1,"h":9.42},{"d":"28.02.2026","t":1,"h":5.25},{"d":"27.02.2026","t":2,"h":13.75},{"d":"26.02.2026","t":3,"h":5.5},{"d":"25.02.2026","t":1,"h":6},{"d":"24.02.2026","t":1,"h":4},{"d":"23.02.2026","t":2,"h":2.5},{"d":"21.02.2026","t":1,"h":4.33},{"d":"20.02.2026","t":4,"h":5.09},{"d":"19.02.2026","t":2,"h":6},{"d":"18.02.2026","t":3,"h":6.17},{"d":"17.02.2026","t":3,"h":9.67}]},
+  "SARPER":{"total":{"t":339,"h":463.94,"days":66},"monthly":{"12/2025":{"t":74,"h":96.04,"d":14},"1/2026":{"t":106,"h":135.58,"d":25},"2/2026":{"t":149,"h":219.73,"d":24},"3/2026":{"t":10,"h":12.59,"d":3}},"firms":[{"n":"Bluport","t":73,"h":108.81},{"n":"Cihangir Okullar\u0131","t":31,"h":52.69},{"n":"Hac\u0131 Sokakta","t":26,"h":32.93},{"n":"Toyota","t":20,"h":28.74},{"n":"Dizzy Foods","t":15,"h":24.01},{"n":"Piyano","t":15,"h":22.17},{"n":"Ye\u015fileko","t":5,"h":21.92},{"n":"Akar Koleji","t":9,"h":18.67},{"n":"Askon","t":10,"h":17.5},{"n":"Tokyat","t":19,"h":16.81}],"daily":[{"d":"27.02.2026","t":7,"h":5.91},{"d":"26.02.2026","t":4,"h":6.92},{"d":"25.02.2026","t":8,"h":6.17},{"d":"24.02.2026","t":3,"h":4.33},{"d":"23.02.2026","t":1,"h":6.83},{"d":"21.02.2026","t":4,"h":4.58},{"d":"20.02.2026","t":3,"h":6.5},{"d":"19.02.2026","t":1,"h":7.5},{"d":"18.02.2026","t":4,"h":9.33},{"d":"17.02.2026","t":7,"h":6.91},{"d":"16.02.2026","t":5,"h":7.01},{"d":"13.02.2026","t":9,"h":7},{"d":"12.02.2026","t":15,"h":17.5},{"d":"11.02.2026","t":10,"h":13.24},{"d":"10.02.2026","t":8,"h":11.75},{"d":"09.02.2026","t":8,"h":15.92},{"d":"08.02.2026","t":2,"h":12.5},{"d":"06.02.2026","t":5,"h":7.75},{"d":"05.02.2026","t":6,"h":7.42},{"d":"04.02.2026","t":6,"h":7.67}]},
+  "BET\u00dcL":{"total":{"t":481,"h":219.83,"days":37},"monthly":{"2/2026":{"t":265,"h":150.95,"d":24},"3/2026":{"t":216,"h":68.88,"d":13}},"firms":[{"n":"Bluport","t":163,"h":85.79},{"n":"Tork Mod\u00fcler Yap\u0131","t":45,"h":22.94},{"n":"Dizzy Foods","t":37,"h":20.12},{"n":"\u015eehzade Grup","t":28,"h":16.16},{"n":"Piyano","t":36,"h":9.07},{"n":"Toyota Plaza","t":28,"h":8.33},{"n":"Arven Yap\u0131","t":11,"h":5.27},{"n":"Hac\u0131 Sokakta","t":15,"h":3.96},{"n":"Tokyat","t":10,"h":3.86},{"n":"Hisar Pastanesi","t":15,"h":3.62}],"daily":[{"d":"16.03.2026","t":16,"h":5.46},{"d":"14.03.2026","t":9,"h":4.32},{"d":"13.03.2026","t":25,"h":7.33},{"d":"12.03.2026","t":16,"h":7.47},{"d":"11.03.2026","t":20,"h":8.51},{"d":"10.03.2026","t":16,"h":6.56},{"d":"09.03.2026","t":13,"h":3.39},{"d":"07.03.2026","t":10,"h":5.79},{"d":"06.03.2026","t":16,"h":5.63},{"d":"05.03.2026","t":18,"h":3.41},{"d":"04.03.2026","t":13,"h":5.61},{"d":"03.03.2026","t":17,"h":5.27},{"d":"02.03.2026","t":15,"h":5.94},{"d":"28.02.2026","t":11,"h":6.1},{"d":"27.02.2026","t":14,"h":6.68},{"d":"26.02.2026","t":12,"h":6.65},{"d":"25.02.2026","t":14,"h":6.74},{"d":"24.02.2026","t":9,"h":6.09},{"d":"23.02.2026","t":10,"h":6.07},{"d":"21.02.2026","t":9,"h":5.47}]},
+  "D\u0130LARA":{"total":{"t":659,"h":588.73,"days":75},"monthly":{"12/2025":{"t":194,"h":88.23,"d":12},"1/2026":{"t":180,"h":215.52,"d":26},"2/2026":{"t":213,"h":202.49,"d":25},"3/2026":{"t":72,"h":82.49,"d":12}},"firms":[{"n":"TGA","t":158,"h":236.07},{"n":"Bluport","t":178,"h":145.1},{"n":"Piyano","t":32,"h":18.79},{"n":"Ye\u015fileko","t":40,"h":25.36},{"n":"Cihangir Okullar\u0131","t":21,"h":13.39},{"n":"\u015eehzade","t":13,"h":13.32},{"n":"Kepsa\u015f","t":25,"h":16.54},{"n":"Dizzy Foods","t":15,"h":10.5},{"n":"Arven","t":10,"h":8.25},{"n":"Piyano Mobilya","t":8,"h":7.5}],"daily":[{"d":"13.03.2026","t":1,"h":1.62},{"d":"12.03.2026","t":5,"h":7.5},{"d":"11.03.2026","t":8,"h":8.67},{"d":"10.03.2026","t":9,"h":11.17},{"d":"09.03.2026","t":4,"h":5.38},{"d":"07.03.2026","t":1,"h":4.5},{"d":"06.03.2026","t":9,"h":8.01},{"d":"05.03.2026","t":7,"h":8.75},{"d":"04.03.2026","t":10,"h":6.72},{"d":"03.03.2026","t":10,"h":9.67},{"d":"02.03.2026","t":7,"h":7.5},{"d":"27.02.2026","t":18,"h":9.63},{"d":"26.02.2026","t":9,"h":8.5},{"d":"25.02.2026","t":9,"h":6.84},{"d":"24.02.2026","t":12,"h":9},{"d":"23.02.2026","t":9,"h":11.14},{"d":"22.02.2026","t":3,"h":6.65},{"d":"20.02.2026","t":14,"h":8.75},{"d":"19.02.2026","t":11,"h":7.89},{"d":"18.02.2026","t":10,"h":8.34}]},
+  "BED\u0130RHAN":{"total":{"t":413,"h":476.36,"days":73},"monthly":{"12/2025":{"t":97,"h":89.75,"d":14},"1/2026":{"t":141,"h":148.42,"d":25},"2/2026":{"t":142,"h":203.27,"d":28},"3/2026":{"t":33,"h":34.92,"d":6}},"firms":[{"n":"Bluport","t":187,"h":122.32},{"n":"Piyano","t":73,"h":100.63},{"n":"TGA","t":17,"h":54.47},{"n":"Kepsa\u015f","t":11,"h":22.18},{"n":"Kayoted","t":22,"h":20.63},{"n":"Ye\u015fileko","t":3,"h":16.75},{"n":"Cihangir Okullar\u0131","t":9,"h":11.5},{"n":"Do\u011fu \u015eekerleme","t":3,"h":11.17},{"n":"\u0130mperial Glow","t":5,"h":9.51},{"n":"\u015eehzade","t":3,"h":9.25}],"daily":[{"d":"07.03.2026","t":5,"h":5.22},{"d":"06.03.2026","t":7,"h":5.16},{"d":"05.03.2026","t":2,"h":6.92},{"d":"04.03.2026","t":8,"h":5.08},{"d":"03.03.2026","t":4,"h":6.83},{"d":"02.03.2026","t":7,"h":5.71},{"d":"28.02.2026","t":3,"h":6.66},{"d":"27.02.2026","t":5,"h":7.08},{"d":"26.02.2026","t":1,"h":6.67},{"d":"25.02.2026","t":6,"h":6.87},{"d":"24.02.2026","t":2,"h":4.85},{"d":"23.02.2026","t":4,"h":4.83},{"d":"20.02.2026","t":4,"h":7.49},{"d":"19.02.2026","t":9,"h":4.92},{"d":"18.02.2026","t":8,"h":6.42},{"d":"17.02.2026","t":9,"h":7.58},{"d":"16.02.2026","t":7,"h":6.17},{"d":"14.02.2026","t":6,"h":6.58},{"d":"13.02.2026","t":5,"h":7.36},{"d":"12.02.2026","t":9,"h":8.92}]},
+  "ZAFER":{"total":{"t":592,"h":475.58,"days":70},"monthly":{"12/2025":{"t":128,"h":92.92,"d":13},"1/2026":{"t":184,"h":152.86,"d":22},"2/2026":{"t":155,"h":133.27,"d":20},"3/2026":{"t":102,"h":80.95,"d":13}},"firms":[{"n":"Bluport","t":323,"h":267.99},{"n":"TGA","t":47,"h":46.44},{"n":"Cihangir Okullar\u0131","t":44,"h":25.52},{"n":"Porland","t":20,"h":15.18},{"n":"Elegan Estetik","t":14,"h":14.34},{"n":"Bir D\u00fc\u015f\u00fcn\u00fcr\u00fcn Feneri","t":17,"h":13.1},{"n":"Ye\u015fileko","t":12,"h":8.57},{"n":"Kepsa\u015f","t":8,"h":7.34},{"n":"Mona Grace","t":5,"h":5.75},{"n":"Piyano Mobilya","t":5,"h":4.92}],"daily":[{"d":"13.03.2026","t":7,"h":4.91},{"d":"12.03.2026","t":11,"h":5.9},{"d":"11.03.2026","t":8,"h":6.59},{"d":"10.03.2026","t":9,"h":5.94},{"d":"09.03.2026","t":9,"h":5.63},{"d":"07.03.2026","t":11,"h":6.67},{"d":"06.03.2026","t":7,"h":7.67},{"d":"05.03.2026","t":10,"h":8.25},{"d":"04.03.2026","t":8,"h":7.5},{"d":"03.03.2026","t":6,"h":5.42},{"d":"02.03.2026","t":9,"h":9.67},{"d":"01.03.2026","t":7,"h":6.8},{"d":"27.02.2026","t":10,"h":6.12},{"d":"26.02.2026","t":8,"h":5.33},{"d":"25.02.2026","t":9,"h":6.72},{"d":"24.02.2026","t":9,"h":8.67},{"d":"23.02.2026","t":5,"h":6.17},{"d":"21.02.2026","t":5,"h":4.92},{"d":"20.02.2026","t":8,"h":9.33},{"d":"19.02.2026","t":6,"h":7.17}]},
+  "SEMA":{"total":{"t":172,"h":322.17,"days":55},"monthly":{"1/2026":{"t":61,"h":107,"d":20},"2/2026":{"t":96,"h":161.92,"d":25},"3/2026":{"t":14,"h":52.17,"d":9}},"firms":[{"n":"TGA","t":58,"h":141.18},{"n":"BLUPORT","t":27,"h":33.33},{"n":"HISAR LOUNGE","t":8,"h":21.42},{"n":"TOYOTA","t":11,"h":19.67},{"n":"PORLAND","t":9,"h":19.67},{"n":"HACI SOKAKTA","t":7,"h":9.92},{"n":"MONA GRACE","t":7,"h":9.58},{"n":"NESPON","t":4,"h":9},{"n":"MON FEERIE","t":6,"h":7.58},{"n":"ASKON","t":5,"h":6.5}],"daily":[{"d":"14.03.2026","t":2,"h":7.42},{"d":"13.03.2026","t":1,"h":6.5},{"d":"12.03.2026","t":2,"h":5.67},{"d":"11.03.2026","t":1,"h":7.5},{"d":"10.03.2026","t":2,"h":7},{"d":"09.03.2026","t":1,"h":6},{"d":"07.03.2026","t":2,"h":4.58},{"d":"06.03.2026","t":1,"h":7.5},{"d":"28.02.2026","t":4,"h":7.25},{"d":"27.02.2026","t":3,"h":5.42},{"d":"26.02.2026","t":4,"h":7.5},{"d":"25.02.2026","t":6,"h":5.84},{"d":"24.02.2026","t":5,"h":8.84},{"d":"23.02.2026","t":2,"h":6.5},{"d":"21.02.2026","t":3,"h":5.75},{"d":"20.02.2026","t":4,"h":8.42},{"d":"19.02.2026","t":2,"h":7},{"d":"18.02.2026","t":5,"h":6.58},{"d":"17.02.2026","t":3,"h":6.75},{"d":"16.02.2026","t":5,"h":7.17}]}
+};
+const DETAIL_DATA = {
+"RECEP":[{"d":"14.03.2026","t":5,"h":3.67,"items":[{"f":"Askon","a":"Görsel üzerine logo eklemesi yapıldı","s":"09:30-10:00","h":0.5},{"f":"Arven","a":"Tıp bayramı tasarımı","s":"10:10-10:40","h":0.5},{"f":"Askon","a":"Görsel üzerine logo eklemesi yapıldı","s":"11:00-11:15","h":0.25},{"f":"Yatay Yaşam","a":"Tıp bayramı tasarımı","s":"11:15-11:40","h":0.42},{"f":"Şehrin Reklam","a":"Logo sunumu","s":"12:00-14:00","h":2}]},{"d":"13.03.2026","t":4,"h":5.83,"items":[{"f":"Askon","a":"Görsel üzerine logo eklemesi yapıldı","s":"09:30-09:40","h":0.17},{"f":"Yeşileko","a":"Öne çıkan tasarımları","s":"10:00-11:30","h":1.5},{"f":"Çarşıbaşı","a":"Yapay zeka görsel çalışması","s":"11:40-12:30","h":0.83},{"f":"Şehrin Reklam","a":"Logo Tasarımına başlandı","s":"12:40-16:00","h":3.33}]},{"d":"12.03.2026","t":6,"h":6.5,"items":[{"f":"Yeşileko","a":"A4 tasarım uyarlaması","s":"09:30-09:45","h":0.25},{"f":"Arven","a":"Çizelge tasarımları yapıldı","s":"10:00-11:00","h":1},{"f":"Zenova Bilişim","a":"Logo çalışması ve sunumlar","s":"11:00-15:00","h":4},{"f":"Askon","a":"Görsel üzerine logo eklemesi yapıldı","s":"15:10-15:25","h":0.25},{"f":"Dizzy Foods","a":"Video için tasarım çalışması","s":"15:30-16:00","h":0.5},{"f":"THN Elektrik","a":"Açık alan tasarım çalışması","s":"16:00-16:30","h":0.5}]},{"d":"11.03.2026","t":5,"h":6.08,"items":[{"f":"Arven","a":"Katalog tasarımı","s":"09:30-11:00","h":1.5},{"f":"Dizzy Foods","a":"Ambalaj tasarımı revizeleri","s":"11:15-12:30","h":1.25},{"f":"Bluport","a":"Yemek Molası","s":"12:30-13:30","h":1},{"f":"Yeşileko","a":"Sosyal medya görselleri","s":"13:30-15:00","h":1.5},{"f":"Askon","a":"Logo düzenleme","s":"15:15-16:05","h":0.83}]},{"d":"09.03.2026","t":5,"h":6.59,"items":[{"f":"Kepsaş","a":"Tebrik kartı tasarımı","s":"09:30-10:30","h":1},{"f":"TGA","a":"Sosyal medya görselleri","s":"10:45-12:30","h":1.75},{"f":"Bluport","a":"Yemek Molası","s":"12:30-13:30","h":1},{"f":"Hacı Sokakta","a":"Menü tasarımı","s":"13:30-15:00","h":1.5},{"f":"Galle Restaurant","a":"Logo revizeleri","s":"15:15-16:35","h":1.34}]}],
+"MOHAMMAD":[{"d":"13.03.2026","t":4,"h":6.5,"items":[{"f":"Bluport","a":"Ekipmanlar çekim için hazırlandı Drone alındı","s":"09:30-10:00","h":0.5},{"f":"Nespon","a":"Son revizesi yapıldı","s":"10:00-10:30","h":0.5},{"f":"BYD","a":"Çekime gidildi. SUEL arabası çekildi","s":"10:30-13:00","h":2.5},{"f":"Dizzy","a":"Yapılan videoların düzenleme ve motionlar","s":"13:00-16:00","h":3}]},{"d":"12.03.2026","t":2,"h":6.83,"items":[{"f":"Piyano","a":"Video düzenleme ve son hali verildi","s":"09:30-12:30","h":3},{"f":"TGA","a":"Kapadokya çekim videoları montaj","s":"13:00-16:50","h":3.83}]},{"d":"11.03.2026","t":6,"h":6.5,"items":[{"f":"Bluport","a":"Toplantı yapıldı","s":"09:30-10:00","h":0.5},{"f":"İBF","a":"Video çekim","s":"10:00-12:00","h":2},{"f":"Toyota","a":"Reklam filmi çekimi","s":"12:30-14:00","h":1.5},{"f":"Kepsaş","a":"Drone çekimi","s":"14:15-15:30","h":1.25},{"f":"Forum AVM","a":"Etkinlik videosu","s":"15:30-16:15","h":0.75},{"f":"Bluport","a":"Dosya aktarımı","s":"16:15-16:45","h":0.5}]},{"d":"10.03.2026","t":2,"h":7,"items":[{"f":"TGA","a":"Video montaj ve düzenleme","s":"09:30-13:00","h":3.5},{"f":"Piyano","a":"Mobilya tanıtım videosu","s":"13:30-17:00","h":3.5}]},{"d":"09.03.2026","t":2,"h":6.83,"items":[{"f":"Nespon makina","a":"Fabrika çekimleri düzenleme","s":"09:30-13:00","h":3.5},{"f":"Agü","a":"Üniversite tanıtım filmi","s":"13:30-16:50","h":3.33}]}],
+"TALHA":[{"d":"14.03.2026","t":5,"h":5.25,"items":[{"f":"TGA","a":"Kapadokya İçeriği Story","s":"09:30-11:10","h":1.67},{"f":"THE VBC","a":"Satış Ofisi Tasarımları","s":"11:10-13:00","h":1.83},{"f":"ŞEHRİN REKLAM","a":"Logo Tasarımı","s":"13:00-14:00","h":1},{"f":"THE VBC","a":"Satış Ofisi Tasarımları","s":"14:00-14:15","h":0.25},{"f":"ŞEHRİN REKLAM","a":"Logo Tasarımı ve Sunumu","s":"14:15-14:45","h":0.5}]},{"d":"13.03.2026","t":7,"h":7.16,"items":[{"f":"TGA","a":"Şalgam İçeriği","s":"09:30-12:10","h":2.67},{"f":"Tork","a":"Logo Düzenleme","s":"12:10-12:30","h":0.33},{"f":"TGA","a":"Şalgam İçeriği devam","s":"12:30-12:50","h":0.33},{"f":"Bluport","a":"Namaza Gittim","s":"12:50-13:40","h":0.83},{"f":"TGA","a":"TGA KAPADOKYA","s":"13:40-16:10","h":2.5},{"f":"TGA","a":"TGA KAPADOKYA devam","s":"16:10-16:30","h":0.33},{"f":"Nespon","a":"Mail İletildi","s":"16:30-16:40","h":0.17}]},{"d":"12.03.2026","t":5,"h":7,"items":[{"f":"TGA","a":"Cappadocia İçerikleri Hazırlama","s":"09:30-10:30","h":1},{"f":"Ali Parıltı","a":"Sunum","s":"10:30-13:30","h":3},{"f":"TGA","a":"Adana Portakal Çiçeği Post","s":"13:30-14:15","h":0.75},{"f":"Ali Parıltı","a":"Sunum devam","s":"14:15-16:00","h":1.75},{"f":"TGA","a":"Cappadocia İçerikleri","s":"16:00-16:30","h":0.5}]},{"d":"11.03.2026","t":5,"h":7.3,"items":[{"f":"Hisar","a":"Mekan çekimleri düzenleme","s":"09:30-11:30","h":2},{"f":"TGA","a":"İçerik hazırlığı","s":"11:30-13:00","h":1.5},{"f":"Cihangir Okulları","a":"Tanıtım tasarımları","s":"13:30-15:30","h":2},{"f":"Egerise","a":"Web sitesi güncelleme","s":"15:30-16:30","h":1},{"f":"Beyazsaray","a":"Sosyal medya görseli","s":"16:30-17:18","h":0.8}]},{"d":"10.03.2026","t":2,"h":7,"items":[{"f":"Tork Yapı","a":"Kurumsal kimlik çalışması","s":"09:30-13:00","h":3.5},{"f":"Gürsu","a":"Belediye tanıtım tasarımları","s":"13:30-17:00","h":3.5}]}],
+"ELANUR":[{"d":"13.03.2026","t":1,"h":5,"items":[{"f":"Doğu Şekerleme","a":"Ambalaj tasarım çalışması","s":"09:30-14:30","h":5}]},{"d":"12.03.2026","t":1,"h":6.33,"items":[{"f":"Porland","a":"Ürün fotoğraf rötuş ve katalog","s":"09:30-15:50","h":6.33}]},{"d":"11.03.2026","t":2,"h":1,"items":[{"f":"Bluport","a":"Toplantı","s":"09:30-10:00","h":0.5},{"f":"Dizzy Foods","a":"Paket tasarımı kontrolü","s":"10:00-10:30","h":0.5}]},{"d":"09.03.2026","t":2,"h":3,"items":[{"f":"Steg","a":"Video kapak görseli","s":"09:30-11:00","h":1.5},{"f":"Yakut Mangal","a":"Menü düzenleme","s":"11:00-12:30","h":1.5}]},{"d":"06.03.2026","t":1,"h":6.75,"items":[{"f":"Doğu Şekerleme","a":"Yeni ürün ambalaj tasarımı","s":"09:30-16:15","h":6.75}]}],
+"SARPER":[{"d":"27.02.2026","t":7,"h":5.91,"items":[{"f":"Kepsaş","a":"Video yapıldı","s":"09:30-11:00","h":1.5},{"f":"Askon","a":"Şubat ayı videosu başlandı","s":"11:15-12:30","h":1.25},{"f":"Steg","a":"Reels yapıldı","s":"12:35-13:40","h":1.08},{"f":"Tokyat","a":"Video revize edildi","s":"14:00-15:00","h":1},{"f":"Bluport","a":"Dosya düzenleme","s":"15:10-15:30","h":0.33},{"f":"Cihangir Okulları","a":"Video kontrol","s":"15:30-15:55","h":0.42},{"f":"Hacı Sokakta","a":"Story hazırlandı","s":"15:55-16:15","h":0.33}]},{"d":"26.02.2026","t":4,"h":6.92,"items":[{"f":"Cihangir Okulları","a":"Tanıtım videosu edit","s":"09:30-12:00","h":2.5},{"f":"Toyota","a":"Showroom çekim düzenleme","s":"12:30-15:00","h":2.5},{"f":"Dizzy Foods","a":"Reels video","s":"15:00-16:30","h":1.5},{"f":"Bluport","a":"Dosya aktarımı","s":"16:30-16:55","h":0.42}]},{"d":"25.02.2026","t":8,"h":6.17,"items":[{"f":"Piyano","a":"Mobilya tanıtım çekimi","s":"09:30-11:00","h":1.5},{"f":"Yeşileko","a":"Fabrika çekim düzenleme","s":"11:00-13:00","h":2},{"f":"Hacı Sokakta","a":"Şube açılış videosu","s":"13:30-15:00","h":1.5},{"f":"Akar Koleji","a":"Okul tanıtım","s":"15:00-15:45","h":0.75},{"f":"Bluport","a":"Yemek Molası","s":"12:00-12:30","h":0.5},{"f":"Askon","a":"Story içerik","s":"15:45-16:00","h":0.25},{"f":"Tokyat","a":"Video revize","s":"16:00-16:15","h":0.25},{"f":"Müze","a":"Müze çekim kontrolü","s":"16:15-16:37","h":0.42}]}],
+"BETÜL":[{"d":"16.03.2026","t":16,"h":5.46,"items":[{"f":"Bluport","a":"Whatsapp Mesajlaşmaları Yapıldı","s":"09:26-09:45","h":0.32},{"f":"Piyano","a":"Toplantı Raporu Yazıldı + Mail Atıldı","s":"09:45-10:05","h":0.33},{"f":"Tork Modüler Yapı","a":"Cemil Bey ve Talha ile Kurumsal Kimlik Toplantısı","s":"10:05-10:35","h":0.5},{"f":"Arven Yapı","a":"Yapılacaklar Konusunda Recep İle Görüşüldü","s":"10:38-10:45","h":0.12},{"f":"Tork Modüler Yapı","a":"Yapılacaklar Konusunda Talha İle Görüşüldü","s":"10:46-10:51","h":0.08},{"f":"Şehzade Grup","a":"Modern Yaka Logosu Netleştikten Sonraki Adımlar Bildirildi","s":"10:52-11:03","h":0.18},{"f":"Şehzade Grup","a":"Slogan Çalışmasına Başlandı","s":"11:15-11:45","h":0.5},{"f":"Şehrin Reklam","a":"Seçilen İsim + Logo + Kurumsal Kimlik Bilgi Verildi","s":"12:11-12:18","h":0.12},{"f":"Piyano","a":"Toplantı Notları Kontrol Edildi","s":"12:20-12:40","h":0.33},{"f":"Bluport","a":"Yemek Molası","s":"12:40-13:30","h":0.83}]},{"d":"14.03.2026","t":9,"h":4.32,"items":[{"f":"Bluport","a":"Gün planlandı mesajlara bakıldı","s":"09:26-09:38","h":0.2},{"f":"Arven Yapı","a":"Toplantı Raporu Yazıldı + Mail Atıldı","s":"09:39-09:59","h":0.33},{"f":"Erciyes AVM","a":"İsim Çalışmasına Başlandı","s":"10:00-10:05","h":0.08},{"f":"Tork Modüler Yapı","a":"Cemil Bey ile Toplantı","s":"10:05-10:35","h":0.5},{"f":"Toyota Plaza","a":"Bayram mesajı hazırlandı","s":"10:35-11:00","h":0.42},{"f":"Dizzy Foods","a":"Haftalık rapor kontrolü","s":"11:00-11:30","h":0.5},{"f":"Bluport","a":"Yemek Molası","s":"12:00-13:00","h":1},{"f":"Şehzade Grup","a":"Marka stratejisi","s":"13:00-13:45","h":0.75},{"f":"Hacı Sokakta","a":"Açılış planlaması","s":"13:45-14:18","h":0.54}]},{"d":"13.03.2026","t":25,"h":7.33,"items":[{"f":"Bluport","a":"Gün planlaması ve mesajlaşmalar","s":"09:26-09:45","h":0.32},{"f":"Piyano","a":"Müşteri toplantısı","s":"09:45-10:30","h":0.75},{"f":"Dizzy Foods","a":"Sosyal medya içerik planı","s":"10:30-11:15","h":0.75},{"f":"TGA","a":"Video proje takibi","s":"11:15-12:00","h":0.75},{"f":"Bluport","a":"Yemek Molası","s":"12:00-13:00","h":1},{"f":"Toyota Plaza","a":"Kampanya planlama","s":"13:00-14:00","h":1},{"f":"Tork Modüler Yapı","a":"Kurumsal kimlik takibi","s":"14:00-14:45","h":0.75},{"f":"Şehzade Grup","a":"Slogan çalışması devam","s":"14:45-15:30","h":0.75},{"f":"Hisar Pastanesi","a":"Sosyal medya planı","s":"15:30-16:00","h":0.5},{"f":"Tokyat","a":"İçerik kontrolü","s":"16:00-16:45","h":0.75}]}],
+"DİLARA":[{"d":"13.03.2026","t":1,"h":1.62,"items":[{"f":"Bluport","a":"Yapılacaklar planlandı, notlar kontrol edildi mesajlara bakıldı hatırlatmalar yapıldı","s":"09:30-11:07","h":1.62}]},{"d":"12.03.2026","t":5,"h":7.5,"items":[{"f":"BLUPORT","a":"Gün planlandı notlara bakıldı hatırlatmalar yapıldı","s":"09:30-10:00","h":0.5},{"f":"TGA","a":"İçerikler hazırlanıyor","s":"10:00-12:30","h":2.5},{"f":"BLUPORT","a":"Yemek molası","s":"12:30-13:30","h":1},{"f":"TGA","a":"İçerikler hazırlanıyor devam","s":"13:30-16:30","h":3},{"f":"YEŞİLEKO","a":"Paylaşım yapıldı","s":"16:30-17:00","h":0.5}]},{"d":"11.03.2026","t":8,"h":8.67,"items":[{"f":"BLUPORT","a":"Yapılacaklar planlandı, notlar kontrol edildi","s":"09:35-10:00","h":0.42},{"f":"BLUPORT","a":"Zafer bey ile birim sorumluları toplantısı","s":"10:00-10:45","h":0.75},{"f":"BLUPORT","a":"Sigara molası ve araç sürüş eğitimi","s":"10:45-11:19","h":0.57},{"f":"TGA","a":"İçerikler hazırlanıyor","s":"11:19-12:30","h":1.18},{"f":"BLUPORT","a":"Yemek molası","s":"12:30-13:30","h":1},{"f":"TGA","a":"İçerikler hazırlanıyor","s":"13:30-15:00","h":1.5},{"f":"BLUPORT","a":"CSS toplantısı yapıldı","s":"15:00-16:15","h":1.25},{"f":"TGA","a":"İçerik düzenleme","s":"16:15-17:15","h":1}]},{"d":"10.03.2026","t":9,"h":11.17,"items":[{"f":"BLUPORT","a":"Gün planlaması","s":"09:30-10:00","h":0.5},{"f":"TGA","a":"İçerik üretimi","s":"10:00-12:30","h":2.5},{"f":"BLUPORT","a":"Yemek molası","s":"12:30-13:30","h":1},{"f":"TGA","a":"Video edit ve içerik","s":"13:30-17:00","h":3.5},{"f":"Cihangir Okulları","a":"Sosyal medya planı","s":"17:00-18:00","h":1},{"f":"Kepsaş","a":"Paylaşım kontrol","s":"18:00-18:30","h":0.5},{"f":"Yeşileko","a":"İçerik paylaşımı","s":"18:30-19:00","h":0.5},{"f":"Piyano","a":"İçerik kontrolü","s":"19:00-19:40","h":0.67},{"f":"Şehzade","a":"Planlama","s":"19:40-20:30","h":1}]},{"d":"09.03.2026","t":4,"h":5.38,"items":[{"f":"BLUPORT","a":"Gün planlaması ve notlar","s":"09:30-10:00","h":0.5},{"f":"TGA","a":"İçerik hazırlığı","s":"10:00-13:00","h":3},{"f":"BLUPORT","a":"Yemek molası","s":"13:00-13:30","h":0.5},{"f":"Kepsaş","a":"Sosyal medya paylaşımları","s":"13:30-14:53","h":1.38}]}],
+"BEDİRHAN":[{"d":"07.03.2026","t":5,"h":5.22,"items":[{"f":"Piyano","a":"Video edit","s":"09:30-11:30","h":2},{"f":"Bluport","a":"Toplantı","s":"11:45-12:30","h":0.75},{"f":"Bluport","a":"Yemek Molası","s":"12:30-13:00","h":0.5},{"f":"TGA","a":"Video çekimi","s":"13:00-14:30","h":1.5},{"f":"Kayoted","a":"Motion graphic","s":"14:30-15:00","h":0.47}]},{"d":"06.03.2026","t":7,"h":5.16,"items":[{"f":"Bluport","a":"Gün planlaması","s":"09:30-10:00","h":0.5},{"f":"Piyano","a":"Video düzenleme","s":"10:00-12:00","h":2},{"f":"Bluport","a":"Yemek Molası","s":"12:00-12:30","h":0.5},{"f":"TGA","a":"Çekim düzenleme","s":"12:30-14:00","h":1.5},{"f":"Kepsaş","a":"Video kontrol","s":"14:00-14:15","h":0.25},{"f":"Kayoted","a":"Animation","s":"14:15-14:30","h":0.25},{"f":"Yeşileko","a":"Video edit","s":"14:30-14:40","h":0.16}]},{"d":"05.03.2026","t":2,"h":6.92,"items":[{"f":"Piyano","a":"Mobilya tanıtım filmi montaj","s":"09:30-13:00","h":3.5},{"f":"TGA","a":"Video prodüksiyon ve montaj","s":"13:30-17:00","h":3.42}]},{"d":"04.03.2026","t":8,"h":5.08,"items":[{"f":"Bluport","a":"Toplantı","s":"09:30-10:00","h":0.5},{"f":"Piyano","a":"Video revize","s":"10:00-11:30","h":1.5},{"f":"TGA","a":"Çekim hazırlığı","s":"11:30-12:30","h":1},{"f":"Bluport","a":"Yemek Molası","s":"12:30-13:00","h":0.5},{"f":"Cihangir Okulları","a":"Okul tanıtım videosu","s":"13:00-14:00","h":1},{"f":"Kayoted","a":"Motion design","s":"14:00-14:15","h":0.25},{"f":"İmperial Glow","a":"Reklam videosu","s":"14:15-14:25","h":0.17},{"f":"Doğu Şekerleme","a":"Ürün tanıtım","s":"14:25-14:30","h":0.16}]},{"d":"03.03.2026","t":4,"h":6.83,"items":[{"f":"Piyano","a":"Video prodüksiyon","s":"09:30-12:30","h":3},{"f":"Bluport","a":"Yemek Molası","s":"12:30-13:00","h":0.5},{"f":"TGA","a":"Video montaj","s":"13:00-15:30","h":2.5},{"f":"Şehzade","a":"Motion graphic","s":"15:30-16:20","h":0.83}]}],
+"ZAFER":[{"d":"13.03.2026","t":7,"h":4.91,"items":[{"f":"Bluport","a":"Mailler Alındı Kontrol Edildi Cevaplandı","s":"09:30-10:00","h":0.5},{"f":"TGA","a":"İçerik Takibi Yapıldı Yeni Görevler Trelloya Girildi","s":"11:15-11:50","h":0.58},{"f":"Bluport","a":"Meta Business Eğitim İçeriğine Devam Edildi","s":"11:50-13:00","h":1.17},{"f":"Bluport","a":"İşler Takip Edildi Marketing Birimi İle Görüşüldü","s":"14:00-16:00","h":2},{"f":"Dizzy Foods","a":"Reklam Filmi İçin Görüşme - Mohammed ve Recep ile","s":"16:00-16:20","h":0.33},{"f":"Bluport","a":"İşler Toparlandı Bir Sonraki Günün İşlerine Dair Notlar","s":"16:20-16:40","h":0.33}]},{"d":"12.03.2026","t":11,"h":5.9,"items":[{"f":"Bluport","a":"Doğan Bey ile Toplantı Yapıldı","s":"09:30-10:15","h":0.75},{"f":"Bluport","a":"Marketing ile Piyano ve CSS Hk Görüşme","s":"10:15-10:30","h":0.25},{"f":"Dizzy Foods","a":"Betül ve Mohammed ile Videolar Hk Görüşme","s":"10:30-11:00","h":0.5},{"f":"TGA","a":"Dilara ile Videolar Hk Görüşme - İçerik Üreticileri Dosya Oluşturuldu","s":"11:00-11:20","h":0.33},{"f":"Bluport","a":"Recep ile Görüşme (Tasarım Ekibi Hk)","s":"11:20-11:40","h":0.33},{"f":"Bluport","a":"Sarp ile Görüşme İş Çıkışı hk Bilgi Verildi","s":"11:40-12:15","h":0.58},{"f":"TGA","a":"İçerik Üreticileri Kullanım Kılavuzu Oluşturuldu","s":"12:15-12:35","h":0.33},{"f":"Bluport","a":"Doğan Bey ile Görüşme","s":"14:00-14:35","h":0.58},{"f":"Porland","a":"Cihangir Bey ile Görüşme Teklif Mail Olarak İletildi","s":"14:35-15:00","h":0.42},{"f":"Bluport","a":"İşler Toparlandı Araştırmalar Yapıldı","s":"15:00-16:00","h":1},{"f":"Bluport","a":"Günlük notlar çıkarıldı","s":"16:00-16:50","h":0.83}]},{"d":"11.03.2026","t":8,"h":6.59,"items":[{"f":"Bluport","a":"Mail ve mesaj kontrolü","s":"09:30-10:00","h":0.5},{"f":"TGA","a":"İçerik planlama","s":"10:00-11:30","h":1.5},{"f":"Cihangir Okulları","a":"Web güncelleme","s":"11:30-12:30","h":1},{"f":"Bluport","a":"Yemek Molası","s":"12:30-13:30","h":1},{"f":"Elegan Estetik","a":"Sosyal medya planı","s":"13:30-14:30","h":1},{"f":"Porland","a":"Ürün katalogu takibi","s":"14:30-15:15","h":0.75},{"f":"Bir Düşünürün Feneri","a":"İçerik kontrolü","s":"15:15-15:45","h":0.5},{"f":"Bluport","a":"Günlük raporlama","s":"15:45-16:05","h":0.34}]}],
+"SEMA":[{"d":"14.03.2026","t":2,"h":7.42,"items":[{"f":"TGA","a":"Sosyal medya içerik planlama ve hazırlık","s":"09:30-13:00","h":3.5},{"f":"BLUPORT","a":"Genel görevler ve raporlama","s":"13:30-17:25","h":3.92}]},{"d":"13.03.2026","t":1,"h":6.5,"items":[{"f":"TGA","a":"İçerik üretimi ve düzenleme","s":"09:30-16:00","h":6.5}]},{"d":"12.03.2026","t":2,"h":5.67,"items":[{"f":"TGA","a":"Sosyal medya içerik hazırlığı","s":"09:30-12:30","h":3},{"f":"PORLAND","a":"Ürün görselleri düzenleme","s":"13:00-15:40","h":2.67}]},{"d":"11.03.2026","t":1,"h":7.5,"items":[{"f":"TGA","a":"Video içerik üretimi ve montaj","s":"09:30-17:00","h":7.5}]},{"d":"10.03.2026","t":2,"h":7,"items":[{"f":"TGA","a":"İçerik planlama ve üretim","s":"09:30-13:00","h":3.5},{"f":"TOYOTA","a":"Araç tanıtım içeriği","s":"13:30-17:00","h":3.5}]}]
+};
+
+const PERSON_COLORS = {
+  'RECEP': '#6366f1', 'MOHAMMAD': '#22d3ee', 'TALHA': '#34d399',
+  'ELANUR': '#f472b6', 'SARPER': '#fb923c', 'BETÜL': '#a78bfa',
+  'DİLARA': '#fbbf24', 'BEDİRHAN': '#60a5fa', 'ZAFER': '#f87171', 'SEMA': '#4ade80'
+};
+
+const MONTHS_ORDER = ['12/2025','1/2026','2/2026','3/2026'];
+const MONTH_LABELS = {'12/2025':'Ara 2025','1/2026':'Oca 2026','2/2026':'Şub 2026','3/2026':'Mar 2026'};
+
+// ==================== NAVIGATION ====================
+function buildNav() {
+  const nav = document.getElementById('nav-persons');
+  const persons = Object.keys(SUMMARY_DATA);
+  nav.innerHTML = persons.map(name => `
+    <div class="nav-item" onclick="showPage('${name}')" data-person="${name}">
+      <div class="nav-dot" style="background:${PERSON_COLORS[name]}"></div>
+      ${name}
+      <span class="badge">${SUMMARY_DATA[name].total.t}</span>
+    </div>
+  `).join('');
+}
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+  if(id === 'overview') {
+    document.getElementById('page-overview').classList.add('active');
+    document.querySelector('.nav-item[onclick*="overview"]').classList.add('active');
+  } else {
+    const page = document.getElementById('page-' + id);
+    if(page) page.classList.add('active');
+    const navItem = document.querySelector(`.nav-item[data-person="${id}"]`);
+    if(navItem) navItem.classList.add('active');
+  }
+}
+
+// ==================== OVERVIEW PAGE ====================
+function buildOverview() {
+  const persons = Object.keys(SUMMARY_DATA);
+  let totalTasks = 0, totalHours = 0, totalDays = 0;
+  persons.forEach(n => {
+    totalTasks += SUMMARY_DATA[n].total.t;
+    totalHours += SUMMARY_DATA[n].total.h;
+    totalDays = Math.max(totalDays, SUMMARY_DATA[n].total.days);
+  });
+
+  document.getElementById('overviewStats').innerHTML = `
+    <div class="stat-card">
+      <div class="label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent2)" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Personel Sayısı</div>
+      <div class="value">${persons.length}</div>
+      <div class="change up">Aktif çalışan</div>
+    </div>
+    <div class="stat-card">
+      <div class="label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg> Toplam Görev</div>
+      <div class="value">${totalTasks.toLocaleString('tr')}</div>
+      <div class="change up">Tüm dönem</div>
+    </div>
+    <div class="stat-card">
+      <div class="label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg> Toplam Saat</div>
+      <div class="value">${Math.round(totalHours).toLocaleString('tr')}</div>
+      <div class="change up">${(totalHours/totalDays).toFixed(1)} saat/gün ort.</div>
+    </div>
+    <div class="stat-card">
+      <div class="label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> İş Günü</div>
+      <div class="value">${totalDays}</div>
+      <div class="change up">Ara 2025 - Mar 2026</div>
+    </div>
+  `;
+
+  // Team cards
+  document.getElementById('teamGrid').innerHTML = persons.map(name => {
+    const d = SUMMARY_DATA[name];
+    const avgH = (d.total.h / d.total.days).toFixed(1);
+    const topFirm = d.firms[0] ? d.firms[0].n : '-';
+    return `
+      <div class="team-card" onclick="showPage('${name}')">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${PERSON_COLORS[name]};border-radius:12px 12px 0 0;"></div>
+        <div class="name">${name}</div>
+        <div class="metric">${d.total.h.toLocaleString('tr')}<span style="font-size:12px;color:var(--text2)"> saat</span></div>
+        <div class="mini-stats">
+          <div class="mini-stat"><span>${d.total.t}</span> görev</div>
+          <div class="mini-stat"><span>${avgH}</span> s/gün</div>
+        </div>
+        <div style="margin-top:8px;font-size:11px;color:var(--text2)">En çok: <span style="color:var(--yellow)">${topFirm}</span></div>
+      </div>
+    `;
+  }).join('');
+}
+
+function buildOverviewCharts() {
+  const persons = Object.keys(SUMMARY_DATA);
+
+  // Monthly comparison bar chart
+  const datasets = persons.map(name => {
+    const d = SUMMARY_DATA[name];
+    return {
+      label: name,
+      data: MONTHS_ORDER.map(m => {
+        // Check various key formats
+        const val = d.monthly[m] || d.monthly[m.replace('/','.')]
+          || Object.entries(d.monthly).find(([k]) => {
+            const [mo,yr] = k.split('/');
+            const [mo2,yr2] = m.split('/');
+            return parseInt(mo)===parseInt(mo2) && parseInt(yr)===parseInt(yr2);
+          })?.[1];
+        return val ? val.h : 0;
+      }),
+      backgroundColor: PERSON_COLORS[name] + 'cc',
+      borderRadius: 4,
+    };
+  });
+
+  new Chart(document.getElementById('teamMonthlyChart'), {
+    type: 'bar',
+    data: { labels: MONTHS_ORDER.map(m => MONTH_LABELS[m] || m), datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { color: '#8b90a5', font: { size: 10 }, boxWidth: 12 } } },
+      scales: {
+        x: { grid: { color: 'rgba(46,51,69,0.5)' }, ticks: { color: '#8b90a5', font: { size: 11 } } },
+        y: { grid: { color: 'rgba(46,51,69,0.5)' }, ticks: { color: '#8b90a5', font: { size: 11 } }, title: { display: true, text: 'Saat', color: '#8b90a5' } }
+      }
+    }
+  });
+
+  // Pie chart
+  new Chart(document.getElementById('teamPieChart'), {
+    type: 'doughnut',
+    data: {
+      labels: persons,
+      datasets: [{ data: persons.map(n => SUMMARY_DATA[n].total.h), backgroundColor: persons.map(n => PERSON_COLORS[n]), borderWidth: 0 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '65%',
+      plugins: { legend: { position: 'bottom', labels: { color: '#8b90a5', font: { size: 10 }, boxWidth: 10, padding: 8 } } }
+    }
+  });
+}
+
+// ==================== PERSON PAGES ====================
+function buildPersonPages() {
+  const container = document.getElementById('personPages');
+
+  Object.keys(SUMMARY_DATA).forEach(name => {
+    const d = SUMMARY_DATA[name];
+    const detail = DETAIL_DATA[name] || [];
+    const color = PERSON_COLORS[name];
+
+    const page = document.createElement('div');
+    page.className = 'page';
+    page.id = 'page-' + name;
+
+    const avgH = (d.total.h / d.total.days).toFixed(1);
+    const avgT = (d.total.t / d.total.days).toFixed(1);
+
+    // Merge SUMMARY daily data with DETAIL items
+    const detailMap = {};
+    detail.forEach(dd => { detailMap[dd.d] = dd.items || []; });
+    const mergedDays = d.daily.map(sd => ({
+      d: sd.d, t: sd.t, h: sd.h,
+      items: detailMap[sd.d] || []
+    }));
+
+    // Build daily table rows separately to avoid nested template issues
+    const dailyRowsHtml = mergedDays.map((day, idx) => {
+      const hasDetail = day.items && day.items.length > 0;
+      const barColor = day.h >= 7 ? 'linear-gradient(90deg, var(--green), var(--cyan))' : day.h >= 5 ? 'linear-gradient(90deg, var(--yellow), var(--orange))' : 'linear-gradient(90deg, var(--red), var(--pink))';
+      const effColor = day.h >= 7 ? 'var(--green)' : day.h >= 5 ? 'var(--yellow)' : 'var(--red)';
+      const effLabel = day.h >= 7 ? '● Yüksek' : day.h >= 5 ? '● Orta' : '● Düşük';
+      const detailHtml = hasDetail ? day.items.map((item, iIdx) =>
+        '<div class="detail-item" onclick="event.stopPropagation();toggleTaskInfo(\''+name+'\','+idx+','+iIdx+')" title="Detay için tıklayın">'
+        +'<span class="detail-time">'+item.s+'</span>'
+        +'<span class="detail-firm">'+item.f+'</span>'
+        +'<span class="detail-desc">'+item.a+'</span>'
+        +'<span class="detail-hours">'+item.h+'s</span>'
+        +'<div class="detail-task-info" id="taskinfo-'+name+'-'+idx+'-'+iIdx+'">'
+        +'<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:4px">'
+        +'<span>🏢 <strong>Firma:</strong> '+item.f+'</span>'
+        +'<span>🕐 <strong>Saat:</strong> '+item.s+'</span>'
+        +'<span>⏱️ <strong>Süre:</strong> '+item.h+' saat</span>'
+        +'</div>'
+        +'<div>📋 <strong>Görev Açıklaması:</strong> '+item.a+'</div>'
+        +'</div>'
+        +'</div>'
+      ).join('') : '<div style="padding:8px;font-size:12px;color:var(--text2)">Detaylı görev bilgisi mevcut değil</div>';
+      return '<tr class="day-row" data-date="'+day.d+'" onclick="toggleDetail(\''+name+'\', '+idx+')" style="cursor:'+(hasDetail?'pointer':'default')+'">'
+        +'<td style="font-weight:600">'+day.d+'</td>'
+        +'<td><span style="font-weight:600;color:'+color+'">'+day.t+'</span> görev</td>'
+        +'<td><div style="display:flex;align-items:center;gap:8px"><span style="font-weight:600">'+day.h+'s</span>'
+        +'<div class="hours-bar"><div class="hours-bar-fill" style="width:'+Math.min(day.h/10*100,100)+'%;background:'+barColor+'"></div></div></div></td>'
+        +'<td><span style="color:'+effColor+';font-weight:600">'+effLabel+'</span></td>'
+        +'<td style="color:var(--text2);font-size:11px">'+(hasDetail ? '▼ Detay' : '—')+'</td>'
+        +'</tr>'
+        +'<tr class="day-row-detail" data-date="'+day.d+'"><td colspan="5" style="padding:0;border:none"><div class="day-detail" id="detail-'+name+'-'+idx+'">'+detailHtml+'</div></td></tr>';
+    }).join('');
+
+    page.innerHTML = `
+      <div class="header">
+        <div>
+          <h1 style="display:flex;align-items:center;gap:10px;">
+            <span style="width:12px;height:12px;border-radius:50%;background:${color};display:inline-block;"></span>
+            ${name}
+          </h1>
+          <div class="header-sub">Bireysel performans detayları</div>
+        </div>
+        <div class="date-filter person-date-filter" data-person="${name}">
+          <button class="date-btn" onclick="setDateFilter('today','${name}')">Bugün</button>
+          <button class="date-btn" onclick="setDateFilter('yesterday','${name}')">Dün</button>
+          <button class="date-btn" onclick="setDateFilter(7,'${name}')">7 Gün</button>
+          <button class="date-btn" onclick="setDateFilter(15,'${name}')">15 Gün</button>
+          <button class="date-btn active" onclick="setDateFilter(30,'${name}')">30 Gün</button>
+          <button class="date-btn" onclick="setDateFilter('all','${name}')">Tümü</button>
+        </div>
+      </div>
+
+      <div class="overview-grid">
+        <div class="stat-card">
+          <div class="label">Toplam Görev</div>
+          <div class="value">${d.total.t}</div>
+          <div class="change up">${avgT} görev/gün ort.</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Toplam Çalışma Saati</div>
+          <div class="value">${d.total.h}</div>
+          <div class="change up">${avgH} saat/gün ort.</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Çalışılan Gün</div>
+          <div class="value">${d.total.days}</div>
+          <div class="change up">Ara 2025 - Mar 2026</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Çalışılan Firma</div>
+          <div class="value">${d.firms.length}+</div>
+          <div class="change up">En çok: ${d.firms[0]?.n || '-'}</div>
+        </div>
+      </div>
+
+      <div class="charts-grid">
+        <div class="chart-card">
+          <h3>Aylık Çalışma Saatleri</h3>
+          <div class="chart-container"><canvas id="chart-monthly-${name}"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>En Çok Çalışılan Firmalar</h3>
+          <div style="max-height:280px;overflow-y:auto;">
+            ${d.firms.slice(0,10).map((f, i) => `
+              <div class="firm-rank">
+                <span class="rank">#${i+1}</span>
+                <div style="flex:1">
+                  <div class="name">${f.n}</div>
+                  <div class="firm-bar"><div class="firm-bar-fill" style="width:${(f.h/d.firms[0].h*100)}%"></div></div>
+                </div>
+                <span class="hours">${f.h}s</span>
+                <span class="tasks-count">${f.t} görev</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-card" style="margin-bottom:28px">
+        <h3>Günlük Çalışma Saatleri (Son 30 Gün)</h3>
+        <div class="chart-container"><canvas id="chart-daily-${name}"></canvas></div>
+      </div>
+
+      <div class="table-card">
+        <h3>📅 Günlük Çalışma Takibi (Son 20 Gün)</h3>
+        <div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2)">
+            <span style="color:var(--green);font-weight:600">●</span> 7+ saat = Yüksek
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2)">
+            <span style="color:var(--yellow);font-weight:600">●</span> 5-7 saat = Orta
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2)">
+            <span style="color:var(--red);font-weight:600">●</span> 5 saat altı = Düşük
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2)">
+            <span style="color:var(--cyan)">▶</span> Detay için tıklayın
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Tarih</th>
+              <th>Görev Sayısı</th>
+              <th>Toplam Saat</th>
+              <th>Verimlilik</th>
+              <th>Detay</th>
+            </tr>
+          </thead>
+          <tbody id="table-${name}">
+            ${dailyRowsHtml}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    container.appendChild(page);
+  });
+}
+
+function toggleDetail(name, idx) {
+  const el = document.getElementById(`detail-${name}-${idx}`);
+  el.classList.toggle('show');
+}
+
+function toggleTaskInfo(name, dayIdx, itemIdx) {
+  const el = document.getElementById(`taskinfo-${name}-${dayIdx}-${itemIdx}`);
+  if(el) el.classList.toggle('show');
+}
+
+// ==================== DATE FILTERING ====================
+let currentFilter = 30;
+
+function parseDateStr(dateStr) {
+  // Format: DD.MM.YYYY
+  const parts = dateStr.split('.');
+  if(parts.length !== 3) return null;
+  return new Date(parseInt(parts[2]), parseInt(parts[1])-1, parseInt(parts[0]));
+}
+
+function setDateFilter(range, personName) {
+  currentFilter = range;
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  let startDate = null;
+  if(range === 'today') {
+    startDate = today;
+  } else if(range === 'yesterday') {
+    startDate = new Date(today); startDate.setDate(startDate.getDate()-1);
+  } else if(typeof range === 'number') {
+    startDate = new Date(today); startDate.setDate(startDate.getDate() - range);
+  }
+  // 'all' => startDate stays null => show everything
+
+  // Update active button styling
+  if(personName) {
+    const filterDiv = document.querySelector(`.person-date-filter[data-person="${personName}"]`);
+    if(filterDiv) {
+      filterDiv.querySelectorAll('.date-btn').forEach(b => b.classList.remove('active'));
+      const label = range === 'today' ? 'Bugün' : range === 'yesterday' ? 'Dün' : range === 'all' ? 'Tümü' : range + ' Gün';
+      filterDiv.querySelectorAll('.date-btn').forEach(b => { if(b.textContent.trim() === label) b.classList.add('active'); });
+    }
+  } else {
+    const gf = document.getElementById('globalDateFilter');
+    if(gf) {
+      gf.querySelectorAll('.date-btn').forEach(b => b.classList.remove('active'));
+      const label = range === 'today' ? 'Bugün' : range === 'yesterday' ? 'Dün' : range === 'all' ? 'Tümü' : range + ' Gün';
+      gf.querySelectorAll('.date-btn').forEach(b => { if(b.textContent.trim() === label) b.classList.add('active'); });
+    }
+  }
+
+  // Filter daily table rows
+  const scope = personName ? document.getElementById('page-'+personName) : document;
+  if(!scope) return;
+
+  scope.querySelectorAll('.day-row').forEach(row => {
+    const dateStr = row.getAttribute('data-date');
+    const rowDate = parseDateStr(dateStr);
+    let show = true;
+
+    if(startDate && rowDate) {
+      if(range === 'today' || range === 'yesterday') {
+        show = rowDate.getTime() === startDate.getTime();
+      } else {
+        show = rowDate >= startDate;
+      }
+    }
+
+    row.style.display = show ? '' : 'none';
+    // Also hide the detail row
+    const nextRow = row.nextElementSibling;
+    if(nextRow && nextRow.classList.contains('day-row-detail')) {
+      nextRow.style.display = show ? '' : 'none';
+    }
+  });
+
+  // Update person stats cards if filtering a specific person
+  if(personName) {
+    updateFilteredStats(personName, startDate, range);
+  }
+
+  // If global filter on overview, update team cards
+  if(!personName) {
+    updateOverviewFiltered(startDate, range);
+  }
+}
+
+function updateFilteredStats(name, startDate, range) {
+  const d = SUMMARY_DATA[name];
+  const filtered = d.daily.filter(day => {
+    if(!startDate) return true;
+    const dayDate = parseDateStr(day.d);
+    if(!dayDate) return false;
+    if(range === 'today' || range === 'yesterday') return dayDate.getTime() === startDate.getTime();
+    return dayDate >= startDate;
+  });
+
+  const filteredH = filtered.reduce((s,x) => s + x.h, 0);
+  const filteredT = filtered.reduce((s,x) => s + x.t, 0);
+  const filteredDays = filtered.length;
+
+  const page = document.getElementById('page-'+name);
+  if(!page) return;
+  const cards = page.querySelectorAll('.stat-card');
+  if(cards.length >= 3) {
+    cards[0].querySelector('.value').textContent = filteredT;
+    cards[0].querySelector('.change').textContent = filteredDays > 0 ? (filteredT/filteredDays).toFixed(1) + ' görev/gün ort.' : '—';
+    cards[1].querySelector('.value').textContent = filteredH.toFixed(1);
+    cards[1].querySelector('.change').textContent = filteredDays > 0 ? (filteredH/filteredDays).toFixed(1) + ' saat/gün ort.' : '—';
+    cards[2].querySelector('.value').textContent = filteredDays;
+  }
+}
+
+function updateOverviewFiltered(startDate, range) {
+  const persons = Object.keys(SUMMARY_DATA);
+  let totalTasks = 0, totalHours = 0, totalDays = 0;
+
+  persons.forEach(name => {
+    const d = SUMMARY_DATA[name];
+    const filtered = d.daily.filter(day => {
+      if(!startDate) return true;
+      const dayDate = parseDateStr(day.d);
+      if(!dayDate) return false;
+      if(range === 'today' || range === 'yesterday') return dayDate.getTime() === startDate.getTime();
+      return dayDate >= startDate;
+    });
+    totalTasks += filtered.reduce((s,x) => s + x.t, 0);
+    totalHours += filtered.reduce((s,x) => s + x.h, 0);
+    totalDays = Math.max(totalDays, filtered.length);
+  });
+
+  const cards = document.querySelectorAll('#page-overview .stat-card');
+  if(cards.length >= 4) {
+    cards[1].querySelector('.value').textContent = totalTasks.toLocaleString('tr');
+    cards[2].querySelector('.value').textContent = Math.round(totalHours).toLocaleString('tr');
+    cards[2].querySelector('.change').textContent = totalDays > 0 ? (totalHours/totalDays).toFixed(1) + ' saat/gün ort.' : '—';
+    cards[3].querySelector('.value').textContent = totalDays;
+  }
+
+  // Update team cards
+  persons.forEach(name => {
+    const d = SUMMARY_DATA[name];
+    const filtered = d.daily.filter(day => {
+      if(!startDate) return true;
+      const dayDate = parseDateStr(day.d);
+      if(!dayDate) return false;
+      if(range === 'today' || range === 'yesterday') return dayDate.getTime() === startDate.getTime();
+      return dayDate >= startDate;
+    });
+    const fH = filtered.reduce((s,x) => s + x.h, 0);
+    const fT = filtered.reduce((s,x) => s + x.t, 0);
+    const fD = filtered.length;
+
+    const card = document.querySelector(`.team-card[onclick*="'${name}'"]`);
+    if(card) {
+      card.querySelector('.metric').innerHTML = fH.toFixed(1) + '<span style="font-size:12px;color:var(--text2)"> saat</span>';
+      const miniStats = card.querySelectorAll('.mini-stat');
+      if(miniStats[0]) miniStats[0].innerHTML = '<span>' + fT + '</span> görev';
+      if(miniStats[1]) miniStats[1].innerHTML = '<span>' + (fD > 0 ? (fH/fD).toFixed(1) : '0') + '</span> s/gün';
+    }
+  });
+}
+
+function buildPersonCharts() {
+  Object.keys(SUMMARY_DATA).forEach(name => {
+    const d = SUMMARY_DATA[name];
+    const color = PERSON_COLORS[name];
+
+    // Monthly chart
+    const monthlyData = MONTHS_ORDER.map(m => {
+      const val = d.monthly[m] || Object.entries(d.monthly).find(([k]) => {
+        const [mo,yr] = k.split('/');
+        const [mo2,yr2] = m.split('/');
+        return parseInt(mo)===parseInt(mo2) && parseInt(yr)===parseInt(yr2);
+      })?.[1];
+      return val ? val.h : 0;
+    });
+
+    const monthlyDays = MONTHS_ORDER.map(m => {
+      const val = d.monthly[m] || Object.entries(d.monthly).find(([k]) => {
+        const [mo,yr] = k.split('/');
+        const [mo2,yr2] = m.split('/');
+        return parseInt(mo)===parseInt(mo2) && parseInt(yr)===parseInt(yr2);
+      })?.[1];
+      return val ? val.d : 0;
+    });
+
+    new Chart(document.getElementById(`chart-monthly-${name}`), {
+      type: 'bar',
+      data: {
+        labels: MONTHS_ORDER.map(m => MONTH_LABELS[m] || m),
+        datasets: [
+          { label: 'Saat', data: monthlyData, backgroundColor: color + 'cc', borderRadius: 6, yAxisID: 'y' },
+          { label: 'İş Günü', data: monthlyDays, type: 'line', borderColor: '#fbbf24', backgroundColor: '#fbbf2433', pointRadius: 5, pointBackgroundColor: '#fbbf24', yAxisID: 'y1', tension: 0.3 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: '#8b90a5', font: { size: 11 } } } },
+        scales: {
+          x: { grid: { color: 'rgba(46,51,69,0.5)' }, ticks: { color: '#8b90a5' } },
+          y: { position: 'left', grid: { color: 'rgba(46,51,69,0.5)' }, ticks: { color: '#8b90a5' }, title: { display: true, text: 'Saat', color: '#8b90a5' } },
+          y1: { position: 'right', grid: { display: false }, ticks: { color: '#fbbf24' }, title: { display: true, text: 'Gün', color: '#fbbf24' } }
+        }
+      }
+    });
+
+    // Daily chart (last 30 days reversed for chronological order)
+    const dailyReversed = [...d.daily].slice(0, 30).reverse();
+    new Chart(document.getElementById(`chart-daily-${name}`), {
+      type: 'line',
+      data: {
+        labels: dailyReversed.map(x => x.d.substring(0,5)),
+        datasets: [{
+          label: 'Saat',
+          data: dailyReversed.map(x => x.h),
+          borderColor: color,
+          backgroundColor: color + '22',
+          fill: true, tension: 0.3, pointRadius: 3,
+          pointBackgroundColor: color
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { color: 'rgba(46,51,69,0.3)' }, ticks: { color: '#8b90a5', font: { size: 10 }, maxRotation: 45 } },
+          y: { grid: { color: 'rgba(46,51,69,0.3)' }, ticks: { color: '#8b90a5' }, beginAtZero: true }
+        }
+      }
+    });
+  });
+}
+
+// ==================== INIT ====================
+document.addEventListener('DOMContentLoaded', () => {
+  buildNav();
+  buildOverview();
+  buildPersonPages();
+  setTimeout(() => {
+    buildOverviewCharts();
+    buildPersonCharts();
+  }, 100);
+});
+</script>
+</body>
+</html>
